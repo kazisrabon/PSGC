@@ -1,0 +1,5 @@
+Questions:
+1. Why JFreeChat and main packages in the code?
+2. When integrated into the Intellij IDEA there seems an error in the "javafx" library, why? Is not there any jar included for "javafx"?
+3. While running the C++ code using the "green play button on the toolbar" nothing is showing at the output.
+
