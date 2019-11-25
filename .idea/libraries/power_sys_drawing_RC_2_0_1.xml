@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="power_sys_drawing_RC_2.0.1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/PSGC_2.0/power_sys_drawing_RC_2.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

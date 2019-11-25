@@ -76,6 +76,7 @@ public class DrawNetworkClean extends JApplet{
         adjacencyMatrix = changeDiagonals(adjacencyMatrix, counts[0], counts[1], counts[2]);
         int generatorsCount = counts[0];
         int loadsCount = counts[1];
+        int linksCount = counts[2];
 //       a list of all loads
         ArrayList<Integer> multiLinkLoads;
         ArrayList<TwoInputs> twoInputsLoads = getTwoInputsLoads(adjacencyMatrix, counts);
@@ -275,25 +276,59 @@ public class DrawNetworkClean extends JApplet{
 //                "compare_matrix_x.csv" contains the mapping value for
 //                "sub_x.csv"
 //                format: 1st column is the old value, 2nd column is new value
-                int i1 = minimized_matrix.length;
-                int i2 = connList2.size();
-                ArrayList<ArrayList<Integer>> compare_matrix = new ArrayList<>();
+                int minMatLength = minimized_matrix.length;
+                int connListSize = connList2.size();
+                int singleLoad = 1;
+//                ArrayList<ArrayList<Integer>> compare_matrix = new ArrayList<>();
+                ArrayList<ArrayList<String>> compare_matrix = new ArrayList<>();
+                int links_unchanged_size = minMatLength-(generatorsCount+singleLoad+connListSize);
+                ArrayList<Integer> links_changed = new ArrayList<>();
+                for (int j = 0; j < connListSize; j++) {
+                    links_changed.addAll(connList2.get(j));
+                }
+                for (int j = 0; j < links_changed.size(); j++) {
+                    if (links_changed.get(j) <= generatorsCount+loadsCount){
+                        links_changed.remove(j);
+                    }
+                }
+                ArrayList<Integer> links_unchanged = new ArrayList<>();
+                for (int j = generatorsCount+loadsCount; j < generatorsCount+loadsCount+linksCount; j++) {
+                    if (!links_changed.contains(j)){
+                        links_unchanged.add(j);
+                    }
+                }
+
+                if (links_unchanged_size > 0 && links_unchanged.size() > 0){
+                    int ii = 1;
+                    for (int j = 0; j < links_unchanged.size() ; j++) {
+                        ArrayList<String> rows = new ArrayList<>();
+                        int i1 = links_unchanged.get(j)+1;
+                        rows.add(""+i1);
+                        i1 = generatorsCount+singleLoad+ii;
+                        rows.add("A"+i1);
+                        compare_matrix.add(rows);
+                        ++ii;
+                    }
+                }
+
                 for (int j = 0; j < connList2.size(); j++) {
                     for (int k = 0; k < connList2.get(j).size(); k++) {
-                        ArrayList<Integer> rows = new ArrayList<>();
+                        ArrayList<String> rows = new ArrayList<>();
                         if (connList2.get(j).get(k) >= generatorsCount+loadsCount){
-                            rows.add(connList2.get(j).get(k)+1);
-                            rows.add(i1 - i2 + 1);
+                            int i1 = connList2.get(j).get(k)+1;
+                            rows.add(""+i1);
+                            i1 = minMatLength - connListSize + 1;
+                            rows.add("A"+i1);
                             compare_matrix.add(rows);
                         }
                     }
-                    --i2;
+                    --connListSize;
                 }
                 try {
                     int j = i+1;
                     WriteToFile(compare_matrix,
-                            directory
-                                    +"compare_matrix_" + j + ".csv");
+                            directory +"compare_matrix_" + j + ".csv",
+                            1);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -1311,6 +1346,32 @@ public class DrawNetworkClean extends JApplet{
                 ArrayList<Integer> lists = listArrayList.get(ii);
                 for (int jj = 0; jj < lists.size(); ++jj) {
                     ecsvp.print(Integer.toString(lists.get(jj)));
+                }
+                ecsvp.println();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        } finally {
+            if (output != null) {
+                output.close();
+            }
+        }
+        if (output != null) {
+            output.close();
+        }
+    }
+
+    public static void WriteToFile(final ArrayList<ArrayList<String>> listArrayList, final String fileName, int i) throws IOException {
+        final File file = new File(fileName);
+        final FileOutputStream fileStream = new FileOutputStream(file, false);
+        final DataOutputStream output = new DataOutputStream(new BufferedOutputStream(fileStream));
+        try {
+            final ExcelCSVPrinter ecsvp = new ExcelCSVPrinter(output);
+            for (int ii = 0; ii < listArrayList.size(); ++ii) {
+                ArrayList<String> lists = listArrayList.get(ii);
+                for (int jj = 0; jj < lists.size(); ++jj) {
+                    ecsvp.print(lists.get(jj));
                 }
                 ecsvp.println();
             }
