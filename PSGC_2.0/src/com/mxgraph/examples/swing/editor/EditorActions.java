@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -2345,68 +2346,24 @@ public class EditorActions {
 											}
 
 										}while (lists.size() > isContainsSub);
-//										int gen = counts[0];
-//										int genLoad = counts[0]+counts[1];
-//										int counter = 0;
-//										for (int i1 = 0; i1 < cells.size(); i1++) {
-//											mxCell cell = cells.get(i1);
-//											String style = cell.getStyle();
-//											String id = cell.getId();
-//											Object object = cell.getValue();
-//											String s = object.toString();
-////											String id2 = ((Element) object).getAttribute("id");
-//											if (!s.equalsIgnoreCase("")) {
-//												int value = Integer.parseInt(s);
-////												cell.setValue("A"+value);
-//												if (value > gen
-//														&& value <= genLoad
-//														&& value != sub
-//														&& style.equalsIgnoreCase("VerticalLink")) {
-//
-//													objects[counter] = cell;
-//													++counter;
-//												}
-//											}
-//											System.out.println(id+" "+style);
-//
-//										}
 
-////			PowerSysGUI editor = new PowerSysGUI("test", (PowerSysGraphComponent) graphComponent);
-//										PowerSysGUI newEditor = new PowerSysGUI(""+fName, new PowerSysGraphComponent(graph));
-//										newGraph = new PowerSysGraph();
-//										newGraph = (PowerSysGraph) newEditor.getGraphComponent().getGraph();
-////			PowerSysGUI editor = new PowerSysGUI();
-//										newEditor.createFrame(new EditorMenuBar(newEditor)).setVisible(true);
-//										mxGraphOutline outline = newEditor.getGraphOutline();
-//										outline.setVisible(!outline.isVisible()); // this is false to remove the zoomed pane from the left side pane
-//										outline.revalidate();
-//										SwingUtilities.invokeLater(new Runnable()
-//										{
-//											public void run()
-//											{
-//												if (outline.getParent() instanceof JSplitPane)
-//												{
-//													if (outline.isVisible())
-//													{
-//														((JSplitPane) outline.getParent())
-//																.setDividerLocation(newEditor
-//																		.getHeight() - 300);
-//														((JSplitPane) outline.getParent())
-//																.setDividerSize(6);
-//													}
-//													else
-//													{
-//														((JSplitPane) outline.getParent())
-//																.setDividerSize(0);
-//													}
-//												}
-//											}
-//										});
-//										graph.removeCells(objects);
-//										mxCell cell1 = cells.get(0);
-//										mxCell cell2 = cells.get(7);
-//										graph.insertEdge(graph.getDefaultParent(), null, "Edge", cell1, cell2);
-//							//			newGraph.removeCells(objects);
+//										add 'A' to each numeration
+                                        graph = editor.getGraphComponent().getGraph();
+                                        cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
+                                        cells = (ArrayList<mxCell>) cells.stream()
+                                                .distinct()
+                                                .collect(Collectors.toList());
+										for (int i1 = 0; i1 < cells.size(); i1++) {
+											mxCell cell = cells.get(i1);
+											Object object = cell.getValue();
+											String s = object.toString();
+//											String id2 = ((Element) object).getAttribute("id");
+											if (!s.equalsIgnoreCase("")) {
+												int value = Integer.parseInt(s);
+												cell.setValue("A"+value);
+											}
+										}
+										System.out.println("test");
 									}
 								} else {
 									JOptionPane.showMessageDialog(editor.getGraphComponent(), "Select Sub_*.csv file",
