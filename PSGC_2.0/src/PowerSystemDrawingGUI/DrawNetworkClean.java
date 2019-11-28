@@ -39,6 +39,26 @@ public class DrawNetworkClean extends JApplet{
     private static ArrayList<Integer> capacitances = null;
     private static final ArrayList<Integer> zeros = new ArrayList<>(Arrays.asList(0, 0, 0));
     private static ArrayList<ArrayList<Integer>> connectedListArrayList;
+
+    public static ArrayList<ArrayList<Integer>> getConnectedLinksofLoad(int[][] adjacencyMatrix, int[] counts) {
+        int generatorsCount = counts[0];
+        int loadsCount = counts[1];
+        ArrayList<ArrayList<Integer>> lists = new ArrayList<>();
+//        row
+        for (int i = generatorsCount; i < generatorsCount + loadsCount; i++) {
+            ArrayList<Integer> connectedList = new ArrayList<>();
+            connectedList.add(i+1);
+            for (int j = generatorsCount+loadsCount; j < adjacencyMatrix.length; j++) {
+//                connections
+                if (adjacencyMatrix[i][j] == 1) {
+                    connectedList.add(j+1);
+                }
+            }
+            lists.add(connectedList);
+        }
+        return lists;
+    }
+
     private static final Dimension DEFAULT_SIZE = new Dimension(530, 320);
     private JGraphXAdapter<String, RelationshipEdge> jgxAdapter;
 
@@ -668,18 +688,17 @@ public class DrawNetworkClean extends JApplet{
                     countLinks += 1;
                 }
             }
-
             if (countLinks == 2) {
                 twoInputsArrayList.add(new TwoInputs(i, connectionNum));
                 arrayListArrayList.add(connectedList);
             }
         }
         setConnectedListArrayList(arrayListArrayList);
-        try {
-            WriteToFile(arrayListArrayList, "connectedListArrayList.csv");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            WriteToFile(arrayListArrayList, "connectedListArrayList.csv");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         return twoInputsArrayList;
     }
 
@@ -829,7 +848,7 @@ public class DrawNetworkClean extends JApplet{
         return new int[][]{{countGen}, {countLd}, {countHL}, countConnElementsArray, connElements};
     }
 
-    private static int[][] CreateAdjacencyMatrix(final mxGraph expGraph) {
+    public static int[][] CreateAdjacencyMatrix(final mxGraph expGraph) {
         int countJunctions = 0;
         expGraph.home();
         final Object parent = expGraph.getDefaultParent();

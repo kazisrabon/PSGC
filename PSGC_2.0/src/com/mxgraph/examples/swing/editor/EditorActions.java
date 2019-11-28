@@ -54,10 +54,6 @@ import javax.swing.text.html.HTMLEditorKit;
 import PowerSystemDrawingGUI.PowerSysGUI;
 import PowerSystemDrawingGUI.PowerSysGraph;
 import PowerSystemDrawingGUI.PowerSysGraphComponent;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.w3c.dom.Document;
 
 import com.mxgraph.analysis.mxDistanceCostFunction;
@@ -89,7 +85,8 @@ import com.mxgraph.util.png.mxPngTextDecoder;
 import com.mxgraph.view.mxGraph;
 
 import PowerSystemDrawingGUI.DrawNetworkClean;
-import org.w3c.dom.Element;
+
+import static PowerSystemDrawingGUI.DrawNetworkClean.changeDiagonals;
 
 /**
  *
@@ -2213,8 +2210,8 @@ public class EditorActions {
 									String path1 = fc.getSelectedFile().getAbsolutePath();
 									String fName = fc.getSelectedFile().getName();
 									String thisLine;
-									int x = Integer.parseInt(fName.replaceAll("\\D+",""));
-									int i = x-1;
+									int sub = Integer.parseInt(fName.replaceAll("\\D+",""));
+									int i = sub-1;
 									if (fName.contains("Sub_")){
 										System.out.println("File name Ok");
 										FileInputStream fis = new FileInputStream(path1);
@@ -2235,69 +2232,181 @@ public class EditorActions {
 											}
 										}
 
-//										DrawNetworkClean.initSubGraph(array, i);
-//										Draw new graph
-										Object[] objects = new Object[1000];
+										int isContainsSub = 0;
+										ArrayList<ArrayList<Integer>> lists = new ArrayList<>();
 										cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
-										int[] counts = DrawNetworkClean.countElements(graph);
-										int gen = counts[0];
-										int genLoad = counts[0]+counts[1];
-										int counter = 0;
-										for (int i1 = 0; i1 < cells.size(); i1++) {
-											mxCell cell = cells.get(i1);
-											String style = cell.getStyle();
-											String id = cell.getId();
-											Object object = cell.getValue();
-											String s = object.toString();
-//											String id2 = ((Element) object).getAttribute("id");
-											if (!s.equalsIgnoreCase("")) {
-												int value = Integer.parseInt(s);
-												cell.setValue("A"+value);
-												if (value > gen
-														&& value <= genLoad
-														&& value != x
-														&& style.equalsIgnoreCase("VerticalLink")) {
 
-													objects[counter] = cell;
-													++counter;
+										int id = findID(sub, cells);
+
+										do {
+//											get values to evaluate
+											graph = editor.getGraphComponent().getGraph();
+											cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
+											int[] counts = DrawNetworkClean.countElements(graph);
+											int[][] adjacencyMatrix = getAM(graph, counts);
+											lists = DrawNetworkClean.getConnectedLinksofLoad(adjacencyMatrix, counts);
+
+											for (int j = 0; j < lists.size(); j++) {
+												ArrayList<Integer> list = lists.get(j);
+												Object[] removedObj = new Object[1];
+												int loadId = findID(list.get(0), cells);
+												if (loadId != id) {
+													if (list.size() == 3) {
+														j = lists.size();
+														int loadtoRemove = list.get(0);
+														int link1toRemove = list.get(1);
+														int link2toRemove = list.get(2);
+
+//													get the cells
+														mxCell load_Cell = findMxCell(loadtoRemove, cells);
+														mxCell link1_Cell = findMxCell(link1toRemove, cells);
+														mxCell link2_Cell = findMxCell(link2toRemove, cells);
+
+														mxCell source_link1 = null,
+																target_link1 = null,
+																source_link2 = null,
+																target_link2 = null;
+//													find first link's source and target
+														if (link1_Cell != null) {
+															source_link1 = findSource(link1_Cell, cells);
+															target_link1 = findTarget(link1_Cell, cells);
+														}
+//													find second link's source and target
+														if (link2_Cell != null) {
+															source_link2 = findSource(link2_Cell, cells);
+															target_link2 = findTarget(link2_Cell, cells);
+														}
+														mxCell sourceCell = null, targetCell = null;
+//													if cells are not null then find the connecting points
+														if (source_link1 != null
+																&& source_link2 != null
+																&& target_link1 != null
+																&& target_link2 != null) {
+															if (source_link1 == source_link2) {
+//															connect target_link1 and target_link2
+//															find the cells
+																sourceCell = target_link1;
+																targetCell = target_link2;
+																removedObj[0] = source_link1;
+															} else if (source_link1 == target_link2) {
+//															connect target_link1 and source_link2
+																sourceCell = target_link1;
+																targetCell = source_link2;
+																removedObj[0] = source_link1;
+															} else if (target_link1 == source_link2) {
+//															connect source_link1 and target_link2
+																sourceCell = source_link1;
+																targetCell = target_link2;
+																removedObj[0] = target_link1;
+															} else if (target_link1 == target_link2) {
+//															connect source_link1 and source_link2
+																sourceCell = source_link1;
+																targetCell = source_link2;
+																removedObj[0] = target_link1;
+															}
+														}
+//													remove load and links
+//													connect two points
+														if (sourceCell != null && targetCell != null) {
+//														removedObj[0] = load_Cell;
+//														removedObj[1] = link1_Cell;
+//														removedObj[2] = link2_Cell;
+
+															graph.removeCells(removedObj);
+															graph.insertEdge(graph.getDefaultParent(),
+																	null, "Edge",
+																	sourceCell, targetCell);
+														}
+													}
+													else {
+														j = lists.size();
+														for (int k = 0; k < list.size(); k++) {
+															mxCell cell = findMxCell(list.get(k), cells);
+															if (cell != null
+																	&& cell.getValue().getClass().toString()
+																	.contains("Load")) {
+																removedObj[0] = cell;
+																graph.removeCells(removedObj);
+															}
+														}
+													}
 												}
 											}
-											System.out.println(id+" "+style);
 
-										}
-//			PowerSysGUI editor = new PowerSysGUI("test", (PowerSysGraphComponent) graphComponent);
-										PowerSysGUI newEditor = new PowerSysGUI(""+fName, new PowerSysGraphComponent(graph));
-										newGraph = new PowerSysGraph();
-										newGraph = (PowerSysGraph) newEditor.getGraphComponent().getGraph();
-//			PowerSysGUI editor = new PowerSysGUI();
-										newEditor.createFrame(new EditorMenuBar(newEditor)).setVisible(true);
-										mxGraphOutline outline = newEditor.getGraphOutline();
-										outline.setVisible(!outline.isVisible()); // this is false to remove the zoomed pane from the left side pane
-										outline.revalidate();
-										SwingUtilities.invokeLater(new Runnable()
-										{
-											public void run()
-											{
-												if (outline.getParent() instanceof JSplitPane)
-												{
-													if (outline.isVisible())
-													{
-														((JSplitPane) outline.getParent())
-																.setDividerLocation(newEditor
-																		.getHeight() - 300);
-														((JSplitPane) outline.getParent())
-																.setDividerSize(6);
-													}
-													else
-													{
-														((JSplitPane) outline.getParent())
-																.setDividerSize(0);
-													}
-												}
+//											get new values to continue the loop/ process
+											graph = editor.getGraphComponent().getGraph();
+											cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
+											counts = DrawNetworkClean.countElements(graph);
+											adjacencyMatrix = getAM(graph, counts);
+											lists = DrawNetworkClean.getConnectedLinksofLoad(adjacencyMatrix, counts);
+											for (int j = 0; j < lists.size(); j++) {
+												if (lists.get(j).get(0) == sub)
+													isContainsSub = 1;
 											}
-										});
-										graph.removeCells(objects);
-							//			newGraph.removeCells(objects);
+
+										}while (lists.size() > isContainsSub);
+//										int gen = counts[0];
+//										int genLoad = counts[0]+counts[1];
+//										int counter = 0;
+//										for (int i1 = 0; i1 < cells.size(); i1++) {
+//											mxCell cell = cells.get(i1);
+//											String style = cell.getStyle();
+//											String id = cell.getId();
+//											Object object = cell.getValue();
+//											String s = object.toString();
+////											String id2 = ((Element) object).getAttribute("id");
+//											if (!s.equalsIgnoreCase("")) {
+//												int value = Integer.parseInt(s);
+////												cell.setValue("A"+value);
+//												if (value > gen
+//														&& value <= genLoad
+//														&& value != sub
+//														&& style.equalsIgnoreCase("VerticalLink")) {
+//
+//													objects[counter] = cell;
+//													++counter;
+//												}
+//											}
+//											System.out.println(id+" "+style);
+//
+//										}
+
+////			PowerSysGUI editor = new PowerSysGUI("test", (PowerSysGraphComponent) graphComponent);
+//										PowerSysGUI newEditor = new PowerSysGUI(""+fName, new PowerSysGraphComponent(graph));
+//										newGraph = new PowerSysGraph();
+//										newGraph = (PowerSysGraph) newEditor.getGraphComponent().getGraph();
+////			PowerSysGUI editor = new PowerSysGUI();
+//										newEditor.createFrame(new EditorMenuBar(newEditor)).setVisible(true);
+//										mxGraphOutline outline = newEditor.getGraphOutline();
+//										outline.setVisible(!outline.isVisible()); // this is false to remove the zoomed pane from the left side pane
+//										outline.revalidate();
+//										SwingUtilities.invokeLater(new Runnable()
+//										{
+//											public void run()
+//											{
+//												if (outline.getParent() instanceof JSplitPane)
+//												{
+//													if (outline.isVisible())
+//													{
+//														((JSplitPane) outline.getParent())
+//																.setDividerLocation(newEditor
+//																		.getHeight() - 300);
+//														((JSplitPane) outline.getParent())
+//																.setDividerSize(6);
+//													}
+//													else
+//													{
+//														((JSplitPane) outline.getParent())
+//																.setDividerSize(0);
+//													}
+//												}
+//											}
+//										});
+//										graph.removeCells(objects);
+//										mxCell cell1 = cells.get(0);
+//										mxCell cell2 = cells.get(7);
+//										graph.insertEdge(graph.getDefaultParent(), null, "Edge", cell1, cell2);
+//							//			newGraph.removeCells(objects);
 									}
 								} else {
 									JOptionPane.showMessageDialog(editor.getGraphComponent(), "Select Sub_*.csv file",
@@ -2312,6 +2421,54 @@ public class EditorActions {
 					}
 				}
 			}
+		}
+
+		private int findID(int cellValue, ArrayList<mxCell> cells) {
+			int id = -1;
+			for (int i = 0; i < cells.size(); i++) {
+				mxCell cell = cells.get(i);
+				String value = cell.getValue().toString();
+				if(!value.isEmpty()){
+					if(Integer.parseInt(value) == cellValue) {
+						id = Integer.parseInt(cell.getId());
+					}
+				}
+			}
+			return id;
+		}
+
+		private mxCell findMxCell(int loadtoRemove, ArrayList<mxCell> cells) {
+			for (int i = 0; i < cells.size(); i++) {
+				mxCell cell = cells.get(i);
+				if (!cell.getValue().toString().isEmpty()
+						&& cell.getValue().toString() != null) {
+					int cell_value = Integer.parseInt(cell.getValue().toString());
+					if (loadtoRemove == cell_value)
+						return cell;
+				}
+			}
+			return null;
+		}
+
+		private mxCell findSource(mxCell link, ArrayList<mxCell> cells){
+			mxCell cell = (mxCell) link.getSource();
+			return cell;
+		}
+
+		private mxCell findTarget(mxCell link, ArrayList<mxCell> cells){
+			mxCell cell = (mxCell) link.getTarget();
+			return cell;
+		}
+
+		private int[][] getAM(mxGraph graph, int[] counts) {
+			int[][] adjacencyMatrix = DrawNetworkClean.CreateAdjacencyMatrix(graph);
+			adjacencyMatrix[0][0] = counts[0];
+			adjacencyMatrix[1][1] = counts[1];
+			adjacencyMatrix[2][2] = counts[2];
+			adjacencyMatrix =
+					changeDiagonals(adjacencyMatrix, counts[0], counts[1], counts[2]);
+			return adjacencyMatrix;
+
 		}
 	}
 
