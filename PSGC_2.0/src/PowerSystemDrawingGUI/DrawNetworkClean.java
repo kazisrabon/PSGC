@@ -317,7 +317,23 @@ public class DrawNetworkClean extends JApplet{
                         links_unchanged.add(j);
                     }
                 }
+//                loop for comparing generators and loads
+                for (int j = 1; j <= generatorsCount; j++) {
+//                    int i1 = j+1;
+                    ArrayList<String> rows = new ArrayList<>();
+                    rows.add(""+j);
+                    rows.add("A"+j);
+                    compare_matrix.add(rows);
+                }
+//              comparing for the single load
+                int single_load_number = i+1;
+                int new_load_number = generatorsCount+singleLoad;
+                ArrayList<String> row = new ArrayList<>();
+                row.add(""+single_load_number);
+                row.add("A"+new_load_number);
+                compare_matrix.add(row);
 
+//              loop for comparing not minimized links
                 if (links_unchanged_size > 0 && links_unchanged.size() > 0){
                     int ii = 1;
                     for (int j = 0; j < links_unchanged.size() ; j++) {
@@ -331,6 +347,7 @@ public class DrawNetworkClean extends JApplet{
                     }
                 }
 
+//                loop for comparing minimized links
                 for (int j = 0; j < connList2.size(); j++) {
                     for (int k = 0; k < connList2.get(j).size(); k++) {
                         ArrayList<String> rows = new ArrayList<>();
