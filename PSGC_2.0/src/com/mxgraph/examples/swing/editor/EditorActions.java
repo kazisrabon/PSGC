@@ -2348,21 +2348,21 @@ public class EditorActions {
 										}while (lists.size() > isContainsSub);
 
 //										add 'A' to each numeration
-                                        graph = editor.getGraphComponent().getGraph();
-                                        cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
-                                        cells = (ArrayList<mxCell>) cells.stream()
-                                                .distinct()
-                                                .collect(Collectors.toList());
-										for (int i1 = 0; i1 < cells.size(); i1++) {
-											mxCell cell = cells.get(i1);
-											Object object = cell.getValue();
-											String s = object.toString();
-//											String id2 = ((Element) object).getAttribute("id");
-											if (!s.equalsIgnoreCase("")) {
-												int value = Integer.parseInt(s);
-												cell.setValue("A"+value);
-											}
-										}
+//                                        graph = editor.getGraphComponent().getGraph();
+//                                        cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
+//                                        cells = (ArrayList<mxCell>) cells.stream()
+//                                                .distinct()
+//                                                .collect(Collectors.toList());
+//										for (int i1 = 0; i1 < cells.size(); i1++) {
+//											mxCell cell = cells.get(i1);
+//											Object object = cell.getValue();
+//											String s = object.toString();
+////											String id2 = ((Element) object).getAttribute("id");
+//											if (!s.equalsIgnoreCase("")) {
+//												int value = Integer.parseInt(s);
+//												cell.setValue("A"+value);
+//											}
+//										}
 										System.out.println("test");
 									}
 								} else {
