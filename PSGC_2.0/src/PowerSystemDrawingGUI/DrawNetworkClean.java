@@ -104,6 +104,21 @@ public class DrawNetworkClean extends JApplet{
 //      if there is only one load
         if (counts[1] <= 1) {
             System.out.println("No modification available");
+            ArrayList<ArrayList<String>> compare_matrix = new ArrayList<>();
+            for (int i = 1; i <= generatorsCount+loadsCount+linksCount; i++) {
+                ArrayList<String> strings = new ArrayList<>();
+                strings.add(""+i);
+                strings.add("A"+i);
+                compare_matrix.add(strings);
+            }
+            try {
+                int j = generatorsCount+loadsCount;
+                WriteToFile(compare_matrix,
+                        directory +"compare_matrix_" + j + ".csv",
+                        1);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 //        if all the loads are connected with more than two links
         else if (connList1.size()==0){
@@ -122,11 +137,38 @@ public class DrawNetworkClean extends JApplet{
                     }
                 }
                 int[][] minimized_matrix = createReducedMatrix(new_adjacency_matrix, multiLinkLoads);
+//                compare matrix
+                ArrayList<ArrayList<String>> compare_matrix = new ArrayList<>();
+//                for generators
+                for (int k = 1; k <= generatorsCount; k++) {
+                    ArrayList<String> strings = new ArrayList<>();
+                    strings.add(""+k);
+                    strings.add("A"+k);
+                    compare_matrix.add(strings);
+                }
+//                for single load
+                ArrayList<String> singleLoad = new ArrayList<>();
+                int j = i+1;
+                int loadNumber = generatorsCount+1;
+                int remain = loadsCount-1;
+                singleLoad.add(""+j);
+                singleLoad.add("A"+loadNumber);
+                compare_matrix.add(singleLoad);
+//                for generators
+                for (int k = generatorsCount+loadsCount; k <= generatorsCount+loadsCount+linksCount; k++) {
+                    ArrayList<String> strings = new ArrayList<>();
+                    int i1 = k - remain;
+                    strings.add(""+k);
+                    strings.add("A"+i1);
+                    compare_matrix.add(strings);
+                }
                 try {
-                    int j = i+1;
                     WriteToFile(minimized_matrix,
                             directory
                                     +"Sub_" + j + ".csv");
+                    WriteToFile(compare_matrix,
+                            directory +"compare_matrix_" + j + ".csv",
+                            1);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
