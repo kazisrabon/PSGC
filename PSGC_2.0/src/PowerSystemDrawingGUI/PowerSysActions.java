@@ -17,6 +17,8 @@
 package PowerSystemDrawingGUI;
 
 import java.awt.event.*;
+import java.util.ArrayList;
+
 import com.mxgraph.view.*;
 import com.mxgraph.swing.*;
 import javax.swing.*;
@@ -147,7 +149,8 @@ public class PowerSysActions
                     }
 //                    add action for weight
                     else if (name.equalsIgnoreCase("Power")){
-                        DrawNetworkClean.AddPowerInputs(graph, DrawNetworkClean.getPowers());
+                        ArrayList<Integer> powers = DrawNetworkClean.getPowers();
+                        DrawNetworkClean.AddPowerInputs(graph, powers);
                     }
 
                     else if (name.equalsIgnoreCase("Capacitance")){

@@ -79,6 +79,9 @@ public class EditorMenuBar extends JMenuBar
         menu.add(editor.bind(mxResources.get("adjacencyexport"), new EditorActions.ExportAction(false, "list")));
         menu.add(editor.bind(mxResources.get("subtopologymatrixexport"), new EditorActions.SingleExportAction(false, "matrix")));
         menu.addSeparator();
+		menu.add(editor.bind(mxResources.get("openXMLFile"), new EditorActions.XMLOpenAction(graphComponent),
+				"/com/mxgraph/examples/swing/images/open.gif"));
+        menu.addSeparator();
         menu.add(editor.bind(mxResources.get("runAnalysis"), new EditorActions.RunAction(),"/com/mxgraph/examples/swing/images/triangle.png"));
         menu.add(editor.bind(mxResources.get("diagram"), new EditorActions.DiagramAction(),"/com/mxgraph/examples/swing/images/barchart.png"));
         menu.addSeparator();
@@ -479,9 +482,9 @@ public class EditorMenuBar extends JMenuBar
 			}
 		});
 
-		menu = add(new JMenu(mxResources.get("subtopologydiagramimport")));
-		menu.add(editor.bind(mxResources.get("openXMLFile"), new EditorActions.XMLOpenAction(graphComponent),
-				"/com/mxgraph/examples/swing/images/open.gif"));
+//		menu = add(new JMenu(mxResources.get("subtopologydiagramimport")));
+//		menu.add(editor.bind(mxResources.get("openXMLFile"), new EditorActions.XMLOpenAction(graphComponent),
+//				"/com/mxgraph/examples/swing/images/open.gif"));
 
 //		menu = add(new JMenu(mxResources.get("test")));
 //		menu.add(editor.bind(mxResources.get("test"), new EditorActions.OpenNewPowerGraph(graphComponent),

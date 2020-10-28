@@ -42,6 +42,16 @@ import javax.swing.text.*;
 public class DrawNetworkClean extends JApplet{
     static final long serialVersionUID = -2764911804288120883L;
     static int itemCounter;
+
+    public static int getSub() {
+        return sub;
+    }
+
+    public static void setSub(int sub) {
+        DrawNetworkClean.sub = sub;
+    }
+
+    public static int sub = 0;
     public static mxCell selJunction;
     static ArrayList<mxICell> connVertices;
     public static Point2D mousePos;
@@ -1013,6 +1023,10 @@ public class DrawNetworkClean extends JApplet{
         return powers;
     }
 
+    public static void setPowers(ArrayList<Integer> powers) {
+        DrawNetworkClean.powers = powers;
+    }
+
     public static ArrayList<Integer> getCapacitances() {
         return capacitances;
     }
@@ -1024,21 +1038,40 @@ public class DrawNetworkClean extends JApplet{
         int countGen = counts[0];
         int countLd = counts[1];
         int totalCounts = counts[0] + counts[1];
+        int pos = getSub();
+        setSub(0);
+        if (pos > 0){
+            pos = pos-1;
+//        remove the unwanted components from list
+            if (list != null) {
+                for (int i = list.size() - 1; i >= countGen; i--) {
+                    if (i != pos)
+                        list.remove(i);
+                }
+            }
+        }
 
         NumberFormat format = NumberFormat.getInstance();
         NumberFormatter formatter = new NumberFormatter(format);
         formatter.setValueClass(Integer.class);
-        formatter.setMinimum(1);
         formatter.setMaximum(Integer.MAX_VALUE);
         formatter.setAllowsInvalid(false);
+
         // If you want the value to be committed on each keystroke instead of focus lost
         formatter.setCommitsOnValidEdit(true);
 
         ArrayList<JFormattedTextField> textFields = new ArrayList<>();
         for (int i = 0; i < totalCounts; i++) {
+//            when there is pre-power values
             if (list != null && list.size() == totalCounts) {
                 textFields.add(new JFormattedTextField(formatter));
-                textFields.get(i).setValue(list.get(i));
+                if (i < countGen){
+                    textFields.get(i).setValue(list.get(i));
+                }
+                else if (i < countGen + countLd){
+                    textFields.get(i).setValue((list.get(i))*(-1));
+                }
+
             } else {
                 if (i < countGen) {
 //                    generator
@@ -1095,7 +1128,7 @@ public class DrawNetworkClean extends JApplet{
 //            get the values from JTextField
             int totalGeneratorCapacity = 0;
             int totalLoadCapacity = 0;
-            int totalLinkCapacity = 0;
+            //int totalLinkCapacity = 0;
             for (int i = 0; i < totalCounts; i++) {
                 String s = textFields.get(i).getText().trim();
                 if (s.equals(""))
@@ -1103,10 +1136,12 @@ public class DrawNetworkClean extends JApplet{
                 int value = Integer.parseInt(s);
                 if (i < countGen) {
                     totalGeneratorCapacity += value;
-                } else if (i < countGen + countLd) {
-                    totalLoadCapacity += value;
+                    powers.add(value);
                 }
-                powers.add(value);
+                else if (i < countGen + countLd) {
+                    totalLoadCapacity += value;
+                    powers.add(value*(-1));
+                }
             }
 //            errors
 //            if (totalGeneratorCapacity != totalLoadCapacity) {
@@ -1135,6 +1170,22 @@ public class DrawNetworkClean extends JApplet{
                     "Power Input's Information", JOptionPane.OK_CANCEL_OPTION);
             if (n == JOptionPane.OK_OPTION)
                 AddPowerInputs(graph, powers);
+        }
+
+        else if (option == CANCEL){
+            for (int i = 0; i < totalCounts; i++) {
+                String s = textFields.get(i).getText().trim();
+                if (s.equals(""))
+                    s = "1";
+                int value = Integer.parseInt(s);
+                if (i < countGen) {
+                    powers.add(value);
+                }
+                else if (i < countGen + countLd) {
+                    powers.add(value*(-1));
+                }
+            }
+
         }
 //        save option : save matrix with powers
 //        else if (option == SAVE) {

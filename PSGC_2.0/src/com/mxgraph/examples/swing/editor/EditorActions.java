@@ -2212,6 +2212,7 @@ public class EditorActions {
 									String fName = fc.getSelectedFile().getName();
 									String thisLine;
 									int sub = Integer.parseInt(fName.replaceAll("\\D+",""));
+									DrawNetworkClean.setSub(sub);
 									int i = sub-1;
 									if (fName.contains("Sub_")){
 										System.out.println("File name Ok");
@@ -2238,7 +2239,7 @@ public class EditorActions {
 										cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
 
 										int id = findID(sub, cells);
-
+                                        ArrayList<Integer> powers = DrawNetworkClean.getPowers();
 										do {
 //											get values to evaluate
 											graph = editor.getGraphComponent().getGraph();
@@ -2317,6 +2318,9 @@ public class EditorActions {
 															graph.insertEdge(graph.getDefaultParent(),
 																	null, "Edge",
 																	sourceCell, targetCell);
+//															decrease one to sub because lower load is removed
+															if (loadId < id)
+																sub--;
 														}
 													}
 													else {
@@ -2328,6 +2332,9 @@ public class EditorActions {
 																	.contains("Load")) {
 																removedObj[0] = cell;
 																graph.removeCells(removedObj);
+//																remove one from sub if loadid is less then id
+																if (loadId < id)
+																	sub--;
 															}
 														}
 													}
@@ -2340,6 +2347,7 @@ public class EditorActions {
 											counts = DrawNetworkClean.countElements(graph);
 											adjacencyMatrix = getAM(graph, counts);
 											lists = DrawNetworkClean.getConnectedLinksofLoad(adjacencyMatrix, counts);
+
 											for (int j = 0; j < lists.size(); j++) {
 												if (lists.get(j).get(0) == sub)
 													isContainsSub = 1;
