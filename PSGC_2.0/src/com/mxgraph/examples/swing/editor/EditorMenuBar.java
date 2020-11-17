@@ -82,9 +82,9 @@ public class EditorMenuBar extends JMenuBar
 		menu.add(editor.bind(mxResources.get("openXMLFile"), new EditorActions.XMLOpenAction(graphComponent),
 				"/com/mxgraph/examples/swing/images/open.gif"));
         menu.addSeparator();
-        menu.add(editor.bind(mxResources.get("runAnalysis"), new EditorActions.RunAction(),"/com/mxgraph/examples/swing/images/triangle.png"));
-        menu.add(editor.bind(mxResources.get("diagram"), new EditorActions.DiagramAction(),"/com/mxgraph/examples/swing/images/barchart.png"));
-        menu.addSeparator();
+//        menu.add(editor.bind(mxResources.get("runAnalysis"), new EditorActions.RunAction(),"/com/mxgraph/examples/swing/images/triangle.png"));
+//        menu.add(editor.bind(mxResources.get("diagram"), new EditorActions.DiagramAction(),"/com/mxgraph/examples/swing/images/barchart.png"));
+//        menu.addSeparator();
         menu.add(editor.bind(mxResources.get("pageSetup"), new EditorActions.PageSetupAction(), "/com/mxgraph/examples/swing/images/pagesetup.gif"));
         menu.add(editor.bind(mxResources.get("print"), new EditorActions.PrintAction(), "/com/mxgraph/examples/swing/images/print.gif"));
         menu.addSeparator();
@@ -104,7 +104,7 @@ public class EditorMenuBar extends JMenuBar
         menu.add(editor.bind(mxResources.get("selectNone"), mxGraphActions.getSelectNoneAction()));
         menu.addSeparator();
         menu.add(editor.bind(mxResources.get("warning"), new EditorActions.WarningAction()));
-        menu.add(editor.bind(mxResources.get("edit"), mxGraphActions.getEditAction()));
+//        menu.add(editor.bind(mxResources.get("edit"), mxGraphActions.getEditAction()));
 
 		// Creates the view menu
 		menu = add(new JMenu(mxResources.get("view")));
@@ -497,9 +497,9 @@ public class EditorMenuBar extends JMenuBar
 	 */
 	public static void populateShapeMenu(JMenu menu, BasicGraphEditor editor)
 	{
-		menu.add(editor.bind(mxResources.get("home"), mxGraphActions.getHomeAction(), "/com/mxgraph/examples/swing/images/house.gif"));
+//		menu.add(editor.bind(mxResources.get("home"), mxGraphActions.getHomeAction(), "/com/mxgraph/examples/swing/images/house.gif"));
 
-		menu.addSeparator();
+//		menu.addSeparator();
 
 		menu.add(editor.bind(mxResources.get("exitGroup"), mxGraphActions.getExitGroupAction(), "/com/mxgraph/examples/swing/images/up.gif"));
 		menu.add(editor.bind(mxResources.get("enterGroup"), mxGraphActions.getEnterGroupAction(),

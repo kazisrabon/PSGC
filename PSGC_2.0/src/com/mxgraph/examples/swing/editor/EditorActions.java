@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -2171,6 +2170,50 @@ public class EditorActions {
 			editor.getUndoManager().clear();
 			editor.getGraphComponent().zoomAndCenter();
 		}
+		/**
+		 * Reads XML+PNG format.
+		 */
+		protected void openXmlPng(BasicGraphEditor editor, File file) throws IOException {
+			Map<String, String> text = mxPngTextDecoder.decodeCompressedText(new FileInputStream(file));
+
+			if (text != null) {
+				String value = text.get("mxGraphModel");
+
+				if (value != null) {
+					Document document = mxXmlUtils.parseXml(URLDecoder.decode(value, "UTF-8"));
+					mxCodec codec = new mxCodec(document);
+					codec.decode(document.getDocumentElement(), editor.getGraphComponent().getGraph().getModel());
+					editor.setCurrentFile(file);
+					resetEditor(editor);
+
+					return;
+				}
+			}
+
+			JOptionPane.showMessageDialog(editor, mxResources.get("imageContainsNoDiagramData"));
+		}
+
+		/**
+		 * @throws IOException
+		 *
+		 */
+		protected void openGD(BasicGraphEditor editor, File file, String gdText) {
+			mxGraph graph = editor.getGraphComponent().getGraph();
+
+			// Replaces file extension with .mxe
+			String filename = file.getName();
+			filename = filename.substring(0, filename.length() - 4) + ".mxe";
+
+			if (new File(filename).exists() && JOptionPane.showConfirmDialog(editor,
+					mxResources.get("overwriteExistingFile")) != JOptionPane.YES_OPTION) {
+				return;
+			}
+
+			((mxGraphModel) graph.getModel()).clear();
+			mxGdCodec.decode(gdText, graph);
+			editor.getGraphComponent().zoomAndCenter();
+			editor.setCurrentFile(new File(lastDir + "/" + filename));
+		}
 
 		/**
 		 *
@@ -2188,9 +2231,9 @@ public class EditorActions {
 
 						JFileChooser fc = new JFileChooser(wd);
 
-						// Adds file filter for supported file format
-						DefaultFileFilter defaultFilter = new DefaultFileFilter(".csv",
-								mxResources.get("allSupportedFormats") + " (.csv)") {
+//						todo modify the process
+						DefaultFileFilter defaultFilter = new DefaultFileFilter(".mxe",
+								mxResources.get("allSupportedFormats") + " (.mxe, .png, .vdx)") {
 
 							public boolean accept(File file) {
 								String lcase = file.getName().toLowerCase();
@@ -2199,11 +2242,251 @@ public class EditorActions {
 							}
 						};
 						fc.addChoosableFileFilter(defaultFilter);
+
+						fc.addChoosableFileFilter(
+								new DefaultFileFilter(".mxe", "mxGraph Editor " + mxResources.get("file") + " (.mxe)"));
+						fc.addChoosableFileFilter(
+								new DefaultFileFilter(".png", "PNG+XML  " + mxResources.get("file") + " (.png)"));
+
+						// Adds file filter for VDX import
+						fc.addChoosableFileFilter(
+								new DefaultFileFilter(".vdx", "XML Drawing  " + mxResources.get("file") + " (.vdx)"));
+
+						// Adds file filter for GD import
+						fc.addChoosableFileFilter(
+								new DefaultFileFilter(".txt", "Graph Drawing  " + mxResources.get("file") + " (.txt)"));
+
 						fc.setFileFilter(defaultFilter);
-
-						int rc = fc.showDialog(null, mxResources.get("openFile"));
-
+						int rc = fc.showDialog(null, mxResources.get("selectFile"));
 						if (rc == JFileChooser.APPROVE_OPTION) {
+							lastDir = fc.getSelectedFile().getParent();
+
+							try {
+								resetEditor(editor);
+								if (fc.getSelectedFile().getAbsolutePath().toLowerCase().endsWith(".png")) {
+									openXmlPng(editor, fc.getSelectedFile());
+								} else if (fc.getSelectedFile().getAbsolutePath().toLowerCase().endsWith(".txt")) {
+									openGD(editor, fc.getSelectedFile(),
+											mxUtils.readFile(fc.getSelectedFile().getAbsolutePath()));
+								} else {
+									Document document = mxXmlUtils
+											.parseXml(mxUtils.readFile(fc.getSelectedFile().getAbsolutePath()));
+
+									mxCodec codec = new mxCodec(document);
+									codec.decode(document.getDocumentElement(), graph.getModel());
+									editor.setCurrentFile(fc.getSelectedFile());
+
+//									todo add second dialog
+//									DefaultFileFilter defaultFilter2 = new DefaultFileFilter(".csv",
+//											mxResources.get("allSupportedFormats") + " (.csv)") {
+//
+//										public boolean accept(File file) {
+//											String lcase = file.getName().toLowerCase();
+//
+//											return super.accept(file) || lcase.endsWith(".png") || lcase.endsWith(".vdx");
+//										}
+//									};
+//									fc.addChoosableFileFilter(defaultFilter2);
+//									fc.setFileFilter(defaultFilter2);
+//
+//									int rc2 = fc.showDialog(null, mxResources.get("openFile"));
+//									if (rc2 == JFileChooser.APPROVE_OPTION) {
+//										lastDir = fc.getSelectedFile().getParent();
+//										if (fc.getSelectedFile().getAbsolutePath().toLowerCase().endsWith(".csv")) {
+//											String path1 = fc.getSelectedFile().getAbsolutePath();
+//											String fName = fc.getSelectedFile().getName();
+//											String thisLine;
+//											int sub = Integer.parseInt(fName.replaceAll("\\D+",""));
+//											DrawNetworkClean.setSub(sub);
+//											int i = sub-1;
+//											if (fName.contains("Sub_")){
+//												System.out.println("File name Ok");
+//												FileInputStream fis = new FileInputStream(path1);
+//												DataInputStream myInput = new DataInputStream(fis);
+//												List<String[]> lines = new ArrayList<String[]>();
+//												while ((thisLine = myInput.readLine()) != null) {
+//													lines.add(thisLine.split(";"));
+//												}
+//
+//// convert our list to a String array.
+//												int[][] array = new int[lines.size()][lines.size()];
+//												for (int j = 0; j < lines.size(); j++) {
+//													String string = lines.get(j)[0];
+//													String[] strings = string.split(",");
+//													for (int k = 0; k < strings.length; k++) {
+//
+//														array[j][k] = Integer.parseInt(strings[k]);
+//													}
+//												}
+//
+//												int isContainsSub = 0;
+//												ArrayList<ArrayList<Integer>> lists = new ArrayList<>();
+//												cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
+//
+//												int id = findID(sub, cells);
+//												ArrayList<Integer> powers = DrawNetworkClean.getPowers();
+//												do {
+////											get values to evaluate
+//													graph = editor.getGraphComponent().getGraph();
+//													cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
+//													int[] counts = DrawNetworkClean.countElements(graph);
+//													int[][] adjacencyMatrix = getAM(graph, counts);
+//													lists = DrawNetworkClean.getConnectedLinksofLoad(adjacencyMatrix, counts);
+//
+//													for (int j = 0; j < lists.size(); j++) {
+//														ArrayList<Integer> list = lists.get(j);
+//														Object[] removedObj = new Object[1];
+//														int loadId = findID(list.get(0), cells);
+//														if (loadId != id) {
+//															if (list.size() == 3) {
+//																j = lists.size();
+//																int loadtoRemove = list.get(0);
+//																int link1toRemove = list.get(1);
+//																int link2toRemove = list.get(2);
+//
+////													get the cells
+//																mxCell load_Cell = findMxCell(loadtoRemove, cells);
+//																mxCell link1_Cell = findMxCell(link1toRemove, cells);
+//																mxCell link2_Cell = findMxCell(link2toRemove, cells);
+//
+//																mxCell source_link1 = null,
+//																		target_link1 = null,
+//																		source_link2 = null,
+//																		target_link2 = null;
+////													find first link's source and target
+//																if (link1_Cell != null) {
+//																	source_link1 = findSource(link1_Cell, cells);
+//																	target_link1 = findTarget(link1_Cell, cells);
+//																}
+////													find second link's source and target
+//																if (link2_Cell != null) {
+//																	source_link2 = findSource(link2_Cell, cells);
+//																	target_link2 = findTarget(link2_Cell, cells);
+//																}
+//																mxCell sourceCell = null, targetCell = null;
+////													if cells are not null then find the connecting points
+//																if (source_link1 != null
+//																		&& source_link2 != null
+//																		&& target_link1 != null
+//																		&& target_link2 != null) {
+//																	if (source_link1 == source_link2) {
+////															connect target_link1 and target_link2
+////															find the cells
+//																		sourceCell = target_link1;
+//																		targetCell = target_link2;
+//																		removedObj[0] = source_link1;
+//																	} else if (source_link1 == target_link2) {
+////															connect target_link1 and source_link2
+//																		sourceCell = target_link1;
+//																		targetCell = source_link2;
+//																		removedObj[0] = source_link1;
+//																	} else if (target_link1 == source_link2) {
+////															connect source_link1 and target_link2
+//																		sourceCell = source_link1;
+//																		targetCell = target_link2;
+//																		removedObj[0] = target_link1;
+//																	} else if (target_link1 == target_link2) {
+////															connect source_link1 and source_link2
+//																		sourceCell = source_link1;
+//																		targetCell = source_link2;
+//																		removedObj[0] = target_link1;
+//																	}
+//																}
+////													remove load and links
+////													connect two points
+//																if (sourceCell != null && targetCell != null) {
+////														removedObj[0] = load_Cell;
+////														removedObj[1] = link1_Cell;
+////														removedObj[2] = link2_Cell;
+//
+//																	graph.removeCells(removedObj);
+//																	graph.insertEdge(graph.getDefaultParent(),
+//																			null, "Edge",
+//																			sourceCell, targetCell);
+////															decrease one to sub because lower load is removed
+//																	if (loadId < id)
+//																		sub--;
+//																}
+//															}
+//															else {
+//																j = lists.size();
+//																for (int k = 0; k < list.size(); k++) {
+//																	mxCell cell = findMxCell(list.get(k), cells);
+//																	if (cell != null
+//																			&& cell.getValue().getClass().toString()
+//																			.contains("Load")) {
+//																		removedObj[0] = cell;
+//																		graph.removeCells(removedObj);
+////																remove one from sub if loadid is less then id
+//																		if (loadId < id)
+//																			sub--;
+//																	}
+//																}
+//															}
+//														}
+//													}
+//
+////											get new values to continue the loop/ process
+//													graph = editor.getGraphComponent().getGraph();
+//													cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
+//													counts = DrawNetworkClean.countElements(graph);
+//													adjacencyMatrix = getAM(graph, counts);
+//													lists = DrawNetworkClean.getConnectedLinksofLoad(adjacencyMatrix, counts);
+//
+//													for (int j = 0; j < lists.size(); j++) {
+//														if (lists.get(j).get(0) == sub)
+//															isContainsSub = 1;
+//													}
+//
+//												}while (lists.size() > isContainsSub);
+//
+////										add 'A' to each numeration
+////                                        graph = editor.getGraphComponent().getGraph();
+////                                        cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
+////                                        cells = (ArrayList<mxCell>) cells.stream()
+////                                                .distinct()
+////                                                .collect(Collectors.toList());
+////										for (int i1 = 0; i1 < cells.size(); i1++) {
+////											mxCell cell = cells.get(i1);
+////											Object object = cell.getValue();
+////											String s = object.toString();
+//////											String id2 = ((Element) object).getAttribute("id");
+////											if (!s.equalsIgnoreCase("")) {
+////												int value = Integer.parseInt(s);
+////												cell.setValue("A"+value);
+////											}
+////										}
+//												System.out.println("test");
+//											}
+//										} else {
+//											JOptionPane.showMessageDialog(editor.getGraphComponent(), "Select Sub_*.csv file",
+//													mxResources.get("error"), JOptionPane.ERROR_MESSAGE);
+//										}
+//									}
+								}
+							} catch (IOException ex) {
+								ex.printStackTrace();
+								JOptionPane.showMessageDialog(editor.getGraphComponent(), ex.toString(),
+										mxResources.get("error"), JOptionPane.ERROR_MESSAGE);
+							}
+						}
+
+						// Adds file filter for supported file format
+						DefaultFileFilter defaultFilter2 = new DefaultFileFilter(".csv",
+								mxResources.get("allSupportedFormats") + " (.csv)") {
+
+							public boolean accept(File file) {
+								String lcase = file.getName().toLowerCase();
+
+								return super.accept(file) || lcase.endsWith(".png") || lcase.endsWith(".vdx");
+							}
+						};
+						fc.addChoosableFileFilter(defaultFilter2);
+						fc.setFileFilter(defaultFilter2);
+
+						int rc2 = fc.showDialog(null, mxResources.get("openFile"));
+
+						if (rc2 == JFileChooser.APPROVE_OPTION) {
 							lastDir = fc.getSelectedFile().getParent();
 
 							try {
@@ -2239,13 +2522,19 @@ public class EditorActions {
 										cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
 
 										int id = findID(sub, cells);
-                                        ArrayList<Integer> powers = DrawNetworkClean.getPowers();
+                                        ArrayList<Integer> powers = new ArrayList<>();
+										for (int j = 0; j < array.length; j++) {
+											int power = array[j][j];
+											if (power > 0 || power < 0)
+												powers.add(power);
+										}
+										DrawNetworkClean.setPowers(powers);
 										do {
 //											get values to evaluate
 											graph = editor.getGraphComponent().getGraph();
 											cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
 											int[] counts = DrawNetworkClean.countElements(graph);
-											int[][] adjacencyMatrix = getAM(graph, counts);
+											int[][] adjacencyMatrix = getAM(graph, counts, array, sub);
 											lists = DrawNetworkClean.getConnectedLinksofLoad(adjacencyMatrix, counts);
 
 											for (int j = 0; j < lists.size(); j++) {
@@ -2345,7 +2634,7 @@ public class EditorActions {
 											graph = editor.getGraphComponent().getGraph();
 											cells = PowerSysGraph.GetAllCells(graph.getDefaultParent());
 											counts = DrawNetworkClean.countElements(graph);
-											adjacencyMatrix = getAM(graph, counts);
+											adjacencyMatrix = getAM(graph, counts, array, sub);
 											lists = DrawNetworkClean.getConnectedLinksofLoad(adjacencyMatrix, counts);
 
 											for (int j = 0; j < lists.size(); j++) {
@@ -2425,13 +2714,24 @@ public class EditorActions {
 			return cell;
 		}
 
-		private int[][] getAM(mxGraph graph, int[] counts) {
+		private int[][] getAM(mxGraph graph, int[] counts, int[][] array, int sub) {
 			int[][] adjacencyMatrix = DrawNetworkClean.CreateAdjacencyMatrix(graph);
-			adjacencyMatrix[0][0] = counts[0];
-			adjacencyMatrix[1][1] = counts[1];
-			adjacencyMatrix[2][2] = counts[2];
-			adjacencyMatrix =
-					changeDiagonals(adjacencyMatrix, counts[0], counts[1], counts[2]);
+			for (int i = 0; i < adjacencyMatrix.length; i++) {
+				if (i < counts[0]){
+					adjacencyMatrix[i][i] = array[i][i];
+				}
+				else if (i+1 == sub){
+					adjacencyMatrix[i][i] = array[counts[0]][counts[0]];
+				}
+				else {
+					adjacencyMatrix[i][i] = 0;
+				}
+			}
+//			adjacencyMatrix[0][0] = counts[0];
+//			adjacencyMatrix[1][1] = counts[1];
+//			adjacencyMatrix[2][2] = counts[2];
+//			adjacencyMatrix =
+//					changeDiagonals(adjacencyMatrix, counts[0], counts[1], counts[2]);
 			return adjacencyMatrix;
 
 		}

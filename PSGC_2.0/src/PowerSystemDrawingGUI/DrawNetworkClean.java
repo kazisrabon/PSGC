@@ -1040,16 +1040,16 @@ public class DrawNetworkClean extends JApplet{
         int totalCounts = counts[0] + counts[1];
         int pos = getSub();
         setSub(0);
-        if (pos > 0){
-            pos = pos-1;
-//        remove the unwanted components from list
-            if (list != null) {
-                for (int i = list.size() - 1; i >= countGen; i--) {
-                    if (i != pos)
-                        list.remove(i);
-                }
-            }
-        }
+//        if (pos > 0){
+//            pos = pos-1;
+////        remove the unwanted components from list
+//            if (list != null) {
+//                for (int i = list.size() - 1; i >= countGen; i--) {
+//                    if (i != pos)
+//                        list.remove(i);
+//                }
+//            }
+//        }
 
         NumberFormat format = NumberFormat.getInstance();
         NumberFormatter formatter = new NumberFormatter(format);
@@ -1548,12 +1548,22 @@ public class DrawNetworkClean extends JApplet{
             System.err.println("Adjacency matrix's size mis-match");
             return oldAdjacencyMatrix;
         } else {
-            for (int i = 0; i < rows; i++) {
-                int j = i + 1;
-                //              TODO change the diagonal value
-                if (j <= countGen) oldAdjacencyMatrix[i][i] = 1;
-                else if (j <= countGen + countLd) oldAdjacencyMatrix[i][i] = -1;
-                else oldAdjacencyMatrix[i][i] = 0;
+            if (powers == null) {
+                for (int i = 0; i < rows; i++) {
+                    int j = i + 1;
+                    //  change the diagonal value
+                    if (j <= countGen) oldAdjacencyMatrix[i][i] = 1;
+                    else if (j <= countGen + countLd) oldAdjacencyMatrix[i][i] = -1;
+                    else oldAdjacencyMatrix[i][i] = 0;
+                }
+            }
+            else{
+                for (int i = 0; i < rows; i++) {
+                    int j = i + 1;
+                    //  change the diagonal value
+                    if (j <= countGen + countLd) oldAdjacencyMatrix[i][i] = powers.get(i);
+                    else oldAdjacencyMatrix[i][i] = 0;
+                }
             }
 
             return oldAdjacencyMatrix;
